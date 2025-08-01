@@ -13,7 +13,7 @@
       "pattern": "waktunya.fun",
       "custom_domain": true
     }
-  ]
+  ],
   "assets": {
     "directory": "public"
   },
