@@ -11,7 +11,7 @@
   {
   "routes": [
     {
-      "pattern": "shop.example.com",
+      "pattern": "waktunya.fun",
       "custom_domain": true
     }
   ]
