@@ -8,6 +8,14 @@
       "tag": "v1"
     }
   ],
+  {
+  "routes": [
+    {
+      "pattern": "shop.example.com",
+      "custom_domain": true
+    }
+  ]
+},
   "assets": {
     "directory": "public"
   },
