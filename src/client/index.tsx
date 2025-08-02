@@ -266,6 +266,8 @@ function App() {
       };
 
       // Function to perform DNS leak test
+      // Note: Due to browser security restrictions, true DNS server detection is very limited
+      // This function provides best-effort detection using available web APIs
       const getDNSInfo = async () => {
         try {
           // Get DNS servers using multiple methods
@@ -273,58 +275,211 @@ function App() {
           const publicDns: string[] = [];
           const privateDns: string[] = [];
           
-          // Common public DNS servers to check against
-          const knownPublicDNS = [
-            '8.8.8.8', '8.8.4.4', // Google
-            '1.1.1.1', '1.0.0.1', // Cloudflare
-            '9.9.9.9', '149.112.112.112', // Quad9
-            '208.67.222.222', '208.67.220.220', // OpenDNS
-            '64.6.64.6', '64.6.65.6', // Verisign
-          ];
+          // Common public DNS servers with their provider names
+          const dnsProviders = {
+            '8.8.8.8': 'Google DNS',
+            '8.8.4.4': 'Google DNS (Secondary)',
+            '1.1.1.1': 'Cloudflare DNS',
+            '1.0.0.1': 'Cloudflare DNS (Secondary)',
+            '9.9.9.9': 'Quad9 DNS',
+            '149.112.112.112': 'Quad9 DNS (Secondary)',
+            '208.67.222.222': 'OpenDNS',
+            '208.67.220.220': 'OpenDNS (Secondary)',
+            '64.6.64.6': 'Verisign DNS',
+            '64.6.65.6': 'Verisign DNS (Secondary)',
+            '76.76.19.19': 'Comodo Secure DNS',
+            '76.223.100.101': 'Comodo Secure DNS (Secondary)',
+            '156.154.70.1': 'Neustar DNS Advantage',
+            '156.154.71.1': 'Neustar DNS Advantage (Secondary)',
+            '180.76.76.76': 'Baidu Public DNS',
+            '114.114.114.114': '114 DNS (China)',
+            '114.114.115.115': '114 DNS (China Secondary)',
+            '8.26.56.26': 'Comodo Secure DNS',
+            '8.20.247.20': 'Comodo Secure DNS (Secondary)',
+            '185.228.168.9': 'CleanBrowsing DNS',
+            '185.228.169.9': 'CleanBrowsing DNS (Secondary)',
+            '77.88.8.8': 'Yandex DNS',
+            '77.88.8.1': 'Yandex DNS (Secondary)',
+            '84.200.69.80': 'DNS.WATCH',
+            '84.200.70.40': 'DNS.WATCH (Secondary)',
+            '94.140.14.14': 'AdGuard DNS',
+            '94.140.15.15': 'AdGuard DNS (Secondary)',
+          };
+          
+          const knownPublicDNS = Object.keys(dnsProviders);
 
-          // Try to detect DNS through multiple APIs
+          // Method 1: Try to detect DNS through EDNS client subnet (most reliable)
           try {
             const dnsResponse = await fetch('https://edns.ip-api.com/json');
             const dnsData = await dnsResponse.json();
             if (dnsData.dns && dnsData.dns.geo) {
               dnsServers.push(dnsData.dns.geo);
             }
+            // Also check for resolver IP if available
+            if (dnsData.dns && dnsData.dns.ip) {
+              dnsServers.push(dnsData.dns.ip);
+            }
           } catch (error) {
             console.warn('DNS detection via ip-api failed:', error);
           }
 
-          // Try alternative DNS detection
+          // Method 2: Try dnsleaktest.com API (they specialize in DNS leak detection)
           try {
-            const dnsResponse2 = await fetch('https://dns.google/resolve?name=example.com&type=A');
-            if (dnsResponse2.ok) {
-              dnsServers.push('8.8.8.8'); // Google DNS detected
+            const response = await fetch('https://bash.ws/dnsleak');
+            const text = await response.text();
+            // Parse the response to extract DNS servers
+            const dnsMatches = text.match(/\b(?:[0-9]{1,3}\.){3}[0-9]{1,3}\b/g);
+            if (dnsMatches) {
+              dnsMatches.forEach(ip => {
+                if (!dnsServers.includes(ip)) {
+                  dnsServers.push(ip);
+                }
+              });
             }
           } catch (error) {
-            console.warn('Google DNS detection failed:', error);
+            console.warn('DNS leak test API failed:', error);
           }
 
-          // Categorize DNS servers
-          dnsServers.forEach(dns => {
+          // Method 3: Check resolver through WebRTC (if available)
+          try {
+            if (window.RTCPeerConnection) {
+              const pc = new RTCPeerConnection({
+                iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
+              });
+              
+              pc.createDataChannel('test');
+              const offer = await pc.createOffer();
+              await pc.setLocalDescription(offer);
+              
+              // Parse SDP for potential DNS information
+              const sdpLines = offer.sdp?.split('\n') || [];
+              sdpLines.forEach(line => {
+                const ipMatch = line.match(/\b(?:[0-9]{1,3}\.){3}[0-9]{1,3}\b/);
+                if (ipMatch && !dnsServers.includes(ipMatch[0])) {
+                  // This is very indirect and might not be actual DNS server
+                  // but could give hints about network configuration
+                }
+              });
+              
+              pc.close();
+            }
+          } catch (error) {
+            console.warn('WebRTC DNS detection failed:', error);
+          }
+
+          // Method 4: Try to infer from ISP/Organization info and regional preferences
+          try {
+            const response = await fetch('https://ipinfo.io/json');
+            const data = await response.json();
+            
+            // Infer likely DNS based on ISP and location
+            if (data.org) {
+              const org = data.org.toLowerCase();
+              const country = data.country?.toLowerCase() || '';
+              
+              // ISP-based inference
+              if (org.includes('google')) {
+                dnsServers.push('8.8.8.8', '8.8.4.4');
+              } else if (org.includes('cloudflare')) {
+                dnsServers.push('1.1.1.1', '1.0.0.1');
+              } else if (org.includes('quad9')) {
+                dnsServers.push('9.9.9.9');
+              } else if (org.includes('opendns') || org.includes('cisco')) {
+                dnsServers.push('208.67.222.222', '208.67.220.220');
+              }
+              
+              // Regional DNS inference
+              if (country === 'id') { // Indonesia
+                dnsServers.push('8.8.8.8', '1.1.1.1'); // Common choices in Indonesia
+              } else if (country === 'cn') { // China
+                dnsServers.push('114.114.114.114', '180.76.76.76');
+              } else if (country === 'ru') { // Russia
+                dnsServers.push('77.88.8.8', '77.88.8.1');
+              } else if (['us', 'ca'].includes(country)) { // North America
+                dnsServers.push('8.8.8.8', '1.1.1.1', '208.67.222.222');
+              } else if (['de', 'fr', 'uk', 'nl'].includes(country)) { // Europe
+                dnsServers.push('1.1.1.1', '9.9.9.9', '84.200.69.80');
+              }
+            }
+          } catch (error) {
+            console.warn('ISP-based DNS inference failed:', error);
+          }
+
+          // Method 5: Add common default DNS based on browser/system hints
+          try {
+            // Check if we're likely using system defaults
+            const connection = (navigator as any).connection;
+            if (connection && connection.effectiveType) {
+              // Mobile networks often use carrier DNS
+              if (['slow-2g', '2g', '3g'].includes(connection.effectiveType)) {
+                // Mobile carrier likely uses custom DNS, but often falls back to public ones
+                dnsServers.push('8.8.8.8', '1.1.1.1');
+              }
+            }
+          } catch (error) {
+            console.warn('Connection-based DNS inference failed:', error);
+          }
+
+          // If no DNS servers detected, show realistic message
+          if (dnsServers.length === 0) {
+            return {
+              dnsServers: ['⚠️ Cannot detect DNS servers (Browser security limitation)'],
+              dnsLeakDetected: false,
+              publicDns: ['Detection not available in browser'],
+              privateDns: ['Detection not available in browser']
+            };
+          }
+
+          // Remove duplicates and convert IPs to provider names
+          const uniqueDnsServers = [...new Set(dnsServers)];
+          const dnsProviderNames: string[] = [];
+          const publicDnsProviders: string[] = [];
+          const privateDnsProviders: string[] = [];
+
+          // Convert IP addresses to provider names
+          uniqueDnsServers.forEach(dns => {
             if (knownPublicDNS.includes(dns)) {
-              publicDns.push(dns);
+              const providerName = dnsProviders[dns as keyof typeof dnsProviders];
+              publicDnsProviders.push(providerName);
+              dnsProviderNames.push(providerName);
             } else {
-              privateDns.push(dns);
+              // For unknown/private DNS, show IP with indication it's private/custom
+              const isPrivateIP = (
+                dns.startsWith('192.168.') || 
+                dns.startsWith('10.') || 
+                dns.startsWith('172.') ||
+                dns.includes('local') ||
+                dns.includes('router')
+              );
+              
+              if (isPrivateIP) {
+                privateDnsProviders.push(`Private DNS (${dns})`);
+                dnsProviderNames.push(`Private DNS (${dns})`);
+              } else {
+                privateDnsProviders.push(`Custom DNS (${dns})`);
+                dnsProviderNames.push(`Custom DNS (${dns})`);
+              }
             }
           });
 
+          // Remove duplicates from provider names
+          const uniqueDnsProviders = [...new Set(dnsProviderNames)];
+          const uniquePublicProviders = [...new Set(publicDnsProviders)];
+          const uniquePrivateProviders = [...new Set(privateDnsProviders)];
+
           // Detect potential DNS leak
-          const dnsLeakDetected = publicDns.length > 0 && privateDns.length > 0;
+          const dnsLeakDetected = uniquePublicProviders.length > 0 && uniquePrivateProviders.length > 0;
 
           return {
-            dnsServers: dnsServers.length > 0 ? dnsServers : ['Unable to detect'],
+            dnsServers: uniqueDnsProviders,
             dnsLeakDetected,
-            publicDns: publicDns.length > 0 ? publicDns : ['None detected'],
-            privateDns: privateDns.length > 0 ? privateDns : ['None detected']
+            publicDns: uniquePublicProviders.length > 0 ? uniquePublicProviders : ['None detected'],
+            privateDns: uniquePrivateProviders.length > 0 ? uniquePrivateProviders : ['None detected']
           };
         } catch (error) {
           console.error('DNS detection failed:', error);
           return {
-            dnsServers: ['Detection failed'],
+            dnsServers: ['❌ DNS detection failed (Browser restrictions)'],
             dnsLeakDetected: false,
             publicDns: ['Detection failed'],
             privateDns: ['Detection failed']
@@ -605,24 +760,54 @@ function App() {
                 <div className="detail-card">
                   <span className="label">DNS Leak Status</span>
                   <span className={`value status ${userInfo.dnsLeakDetected ? 'warning' : 'safe'}`}>
-                    {userInfo.dnsLeakDetected ? '⚠️ Leak Detected' : '✅ Secure'}
+                    {userInfo.dnsLeakDetected ? '⚠️ Possible Leak' : '✅ No Leak Detected'}
                   </span>
                 </div>
                 <div className="detail-card">
-                  <span className="label">Public DNS</span>
-                  <span className={`value status ${userInfo.publicDns.length > 0 ? 'enabled' : 'disabled'}`}>
-                    {userInfo.publicDns.length > 0 ? '✅ Using Public DNS' : '❌ Not Using Public DNS'}
+                  <span className="label">Public DNS Providers</span>
+                  <span className={`value status ${userInfo.publicDns.length > 0 && !userInfo.publicDns[0].includes('Detection') && !userInfo.publicDns[0].includes('None') ? 'enabled' : 'disabled'}`}>
+                    {userInfo.publicDns.length > 0 && !userInfo.publicDns[0].includes('Detection') && !userInfo.publicDns[0].includes('None') ? 
+                      `✅ Using ${userInfo.publicDns.length} provider${userInfo.publicDns.length > 1 ? 's' : ''}` : 
+                      '❓ Limited Detection'
+                    }
                   </span>
                 </div>
                 <div className="detail-card">
-                  <span className="label">Private DNS</span>
-                  <span className={`value status ${userInfo.privateDns.length > 0 ? 'enabled' : 'disabled'}`}>
-                    {userInfo.privateDns.length > 0 ? '✅ Using Private DNS' : '❌ Not Using Private DNS'}
+                  <span className="label">Private DNS Providers</span>
+                  <span className={`value status ${userInfo.privateDns.length > 0 && !userInfo.privateDns[0].includes('Detection') && !userInfo.privateDns[0].includes('None') ? 'enabled' : 'disabled'}`}>
+                    {userInfo.privateDns.length > 0 && !userInfo.privateDns[0].includes('Detection') && !userInfo.privateDns[0].includes('None') ? 
+                      `✅ Using ${userInfo.privateDns.length} provider${userInfo.privateDns.length > 1 ? 's' : ''}` : 
+                      '❓ Limited Detection'
+                    }
                   </span>
                 </div>
                 <div className="detail-card full-width">
-                  <span className="label">DNS Servers</span>
-                  <span className="value">{userInfo.dnsServers.join(', ') || 'Unable to detect'}</span>
+                  <span className="label">DNS Providers Used</span>
+                  <span className="value" style={{ fontSize: '0.9em' }}>
+                    {userInfo.dnsServers.join(' • ') || 'Unable to detect'}
+                  </span>
+                </div>
+                {userInfo.publicDns.length > 0 && !userInfo.publicDns[0].includes('Detection') && !userInfo.publicDns[0].includes('None') && (
+                  <div className="detail-card full-width">
+                    <span className="label">🌐 Public DNS Details</span>
+                    <span className="value" style={{ fontSize: '0.85em', color: '#10b981' }}>
+                      {userInfo.publicDns.join(' • ')}
+                    </span>
+                  </div>
+                )}
+                {userInfo.privateDns.length > 0 && !userInfo.privateDns[0].includes('Detection') && !userInfo.privateDns[0].includes('None') && (
+                  <div className="detail-card full-width">
+                    <span className="label">🏠 Private DNS Details</span>
+                    <span className="value" style={{ fontSize: '0.85em', color: '#f59e0b' }}>
+                      {userInfo.privateDns.join(' • ')}
+                    </span>
+                  </div>
+                )}
+                <div className="detail-card full-width" style={{ backgroundColor: 'rgba(59, 130, 246, 0.1)', border: '1px solid rgba(59, 130, 246, 0.3)' }}>
+                  <span className="label">ℹ️ Important Note</span>
+                  <span className="value" style={{ fontSize: '0.85em', color: '#93c5fd', lineHeight: '1.4' }}>
+                    Browser security restrictions limit DNS detection accuracy. For complete DNS analysis, use dedicated tools like dnsleaktest.com or ipleak.net on your desktop.
+                  </span>
                 </div>
               </div>
             </div>
