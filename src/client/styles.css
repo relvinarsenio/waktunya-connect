@@ -1,50 +1,469 @@
 /* 
-  We've already included normalize.css. 
-
-  But we'd like a modern looking boilerplate. 
-  Clean type, sans-serif, and a nice color palette. 
-  
+  Modern dark theme with detailed analytics display
+  Real-time updates and comprehensive visitor information
 */
 
-body {
-  font-family: sans-serif;
-  font-size: 16px;
-  line-height: 1.5;
-  color: #999;
-  background-color: black;
-  text-align: center;
-  padding-top: 40px;
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }
 
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
-  font-family: sans-serif;
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-size: 16px;
+  line-height: 1.6;
+  color: #e5e7eb;
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+.App {
+  min-height: 100vh;
+  padding: 2rem 1rem;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+/* Connection Status */
+.connection-status {
+  position: fixed;
+  top: 2rem;
+  left: 2rem;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(30, 41, 59, 0.95);
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+.status-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #64748b;
+}
+
+.connection-status.connected .status-indicator {
+  background: #22c55e;
+  animation: pulse 2s infinite;
+}
+
+.connection-status.connecting .status-indicator {
+  background: #f59e0b;
+  animation: pulse 1s infinite;
+}
+
+.connection-status.disconnected .status-indicator {
+  background: #ef4444;
+}
+
+/* Header */
+.header {
+  text-align: center;
+  margin: 4rem 0 3rem 0;
+  padding: 2rem 0;
+}
+
+.header h1 {
+  font-size: 3.5rem;
+  font-weight: 800;
+  background: linear-gradient(135deg, #60a5fa, #34d399, #f59e0b);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 1rem;
+  animation: float 3s ease-in-out infinite;
+}
+
+.subtitle {
+  font-size: 1.25rem;
+  color: #94a3b8;
+  font-weight: 300;
+  max-width: 600px;
+  margin: 0 auto 1.5rem auto;
+}
+
+.live-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  color: #22c55e;
+  font-weight: 500;
+}
+
+.pulse-dot {
+  width: 8px;
+  height: 8px;
+  background: #22c55e;
+  border-radius: 50%;
+  animation: pulse 2s infinite;
+}
+
+/* Stats Overview */
+.stats-overview {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 2rem;
+  margin-bottom: 3rem;
+}
+
+.stat-card {
+  background: rgba(30, 41, 59, 0.8);
+  border: 1px solid rgba(71, 85, 105, 0.3);
+  border-radius: 20px;
+  padding: 2rem;
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+}
+
+.stat-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(96, 165, 250, 0.5);
+  box-shadow: 0 12px 48px rgba(96, 165, 250, 0.15);
+}
+
+.stat-icon {
+  font-size: 3rem;
+  width: 80px;
+  height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  border-radius: 16px;
+  flex-shrink: 0;
+}
+
+.stat-content h3 {
+  font-size: 0.875rem;
   font-weight: 600;
-  line-height: 1.25;
-  margin-top: 0;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
   margin-bottom: 0.5rem;
 }
 
-#app {
-  padding: 1rem;
+.stat-number {
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: #f1f5f9;
+  line-height: 1;
+  margin-bottom: 0.25rem;
 }
 
-h1 {
-  color: white;
+.stat-content p {
+  color: #64748b;
+  font-size: 0.875rem;
 }
 
-b {
-  color: white;
-  font-weight: bold;
+/* User Details */
+.user-details {
+  margin-bottom: 3rem;
 }
 
+.user-details h2 {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #f1f5f9;
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+.details-grid {
+  display: grid;
+  gap: 2rem;
+}
+
+.detail-section {
+  background: rgba(30, 41, 59, 0.6);
+  border: 1px solid rgba(71, 85, 105, 0.3);
+  border-radius: 16px;
+  padding: 2rem;
+  backdrop-filter: blur(10px);
+}
+
+.detail-section h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #f1f5f9;
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid rgba(71, 85, 105, 0.3);
+}
+
+.detail-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1rem;
+}
+
+.detail-card {
+  background: rgba(51, 65, 85, 0.4);
+  border: 1px solid rgba(71, 85, 105, 0.2);
+  border-radius: 12px;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  transition: all 0.3s ease;
+}
+
+.detail-card:hover {
+  background: rgba(51, 65, 85, 0.6);
+  border-color: rgba(96, 165, 250, 0.3);
+}
+
+.detail-card.full-width {
+  grid-column: 1 / -1;
+}
+
+.detail-card .label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.detail-card .value {
+  font-size: 1rem;
+  font-weight: 500;
+  color: #f1f5f9;
+  word-break: break-word;
+}
+
+.detail-card .value.user-agent {
+  font-size: 0.875rem;
+  font-family: 'Monaco', 'Consolas', monospace;
+  background: rgba(15, 23, 42, 0.6);
+  padding: 0.75rem;
+  border-radius: 8px;
+  border: 1px solid rgba(71, 85, 105, 0.3);
+}
+
+.detail-card .value.languages {
+  font-size: 0.875rem;
+}
+
+.detail-card .value.status.online {
+  color: #22c55e;
+}
+
+.detail-card .value.status.offline {
+  color: #ef4444;
+}
+
+.detail-card .value.status.enabled {
+  color: #22c55e;
+}
+
+.detail-card .value.status.disabled {
+  color: #ef4444;
+}
+
+.detail-card .value.status.safe {
+  color: #22c55e;
+}
+
+.detail-card .value.status.warning {
+  color: #f59e0b;
+}
+
+/* Real-time updates */
+.live-time {
+  animation: glow 2s ease-in-out infinite alternate;
+}
+
+.session-duration {
+  color: #34d399 !important;
+  font-weight: 600;
+}
+
+.counter-animation {
+  transition: all 0.3s ease;
+}
+
+/* Loading States */
+.loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 3rem;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(96, 165, 250, 0.3);
+  border-top: 3px solid #60a5fa;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.error {
+  text-align: center;
+  padding: 3rem;
+  color: #ef4444;
+}
+
+.error h3 {
+  color: #ef4444;
+  margin-bottom: 1rem;
+}
+
+/* Footer */
+.footer {
+  text-align: center;
+  padding: 3rem 0;
+  border-top: 1px solid rgba(71, 85, 105, 0.3);
+  margin-top: 3rem;
+}
+
+.footer p {
+  color: #64748b;
+  margin-bottom: 0.5rem;
+}
+
+.footer-note {
+  font-size: 0.875rem;
+  color: #475569;
+  font-style: italic;
+}
+
+.privacy-note {
+  font-size: 0.75rem;
+  color: #475569;
+  margin-top: 1rem;
+}
+
+/* Links */
 a {
-  color: #ccc;
-  text-decoration-line: underline;
-  text-underline-offset: 3px;
-  text-decoration-color: #555;
+  color: #60a5fa;
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+a:hover {
+  color: #93c5fd;
+  text-decoration: underline;
+}
+
+/* Animations */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(1.1);
+  }
+}
+
+@keyframes glow {
+  0% {
+    text-shadow: 0 0 5px rgba(96, 165, 250, 0.5);
+  }
+  100% {
+    text-shadow: 0 0 20px rgba(96, 165, 250, 0.8);
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .App {
+    padding: 1rem;
+  }
+  
+  .header {
+    margin: 2rem 0;
+  }
+  
+  .header h1 {
+    font-size: 2.5rem;
+  }
+  
+  .subtitle {
+    font-size: 1rem;
+  }
+  
+  .stats-overview {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  .stat-card {
+    padding: 1.5rem;
+  }
+  
+  .stat-icon {
+    width: 60px;
+    height: 60px;
+    font-size: 2rem;
+  }
+  
+  .stat-number {
+    font-size: 2rem;
+  }
+  
+  .detail-cards {
+    grid-template-columns: 1fr;
+  }
+  
+  .detail-section {
+    padding: 1.5rem;
+  }
+  
+  .connection-status {
+    top: 1rem;
+    left: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .header h1 {
+    font-size: 2rem;
+  }
+  
+  .stat-card {
+    flex-direction: column;
+    text-align: center;
+    padding: 1rem;
+  }
+  
+  .detail-card {
+    padding: 1rem;
+  }
 }

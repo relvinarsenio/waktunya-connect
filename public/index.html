@@ -7,21 +7,68 @@
       content="width=device-width, initial-scale=1.0, shrink-to-fit=no"
     />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <title>Globe</title>
+    <title>Waktunya Connect - Real-time Global Connections</title>
     <!-- Favicon -->
-    <link rel="icon" href="/favicon.ico" sizes="any" />
+    <link rel="icon" href="favicon.ico" sizes="any" />
+    <link rel="icon" href="favicon.ico" type="image/x-icon" />
+    <link rel="apple-touch-icon" href="favicon.ico" />
+    <link rel="shortcut icon" href="favicon.ico" type="image/x-icon" />
     <!-- Primary Meta Tags -->
-    <meta name="title" content="PartyServer" />
-    <meta name="description" content="Everything's better with friends!" />
-    <meta name="author" content="PartyServer" />
+    <meta name="title" content="Waktunya Connect - Real-time Global Connections" />
+    <meta name="description" content="Discover real-time connections around the globe. See live visitor information, IP addresses, and global activity on an interactive 3D globe." />
+    <meta name="author" content="Waktunya Connect" />
+    <meta name="keywords" content="real-time, global connections, IP tracking, visitor analytics, 3D globe, live connections" />
     <!-- Theme Colour -->
-    <meta name="theme-color" content="#ffffff" />
+    <meta name="theme-color" content="#0f172a" />
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="/" />
+    <meta property="og:title" content="Waktunya Connect - Real-time Global Connections" />
+    <meta property="og:description" content="Discover real-time connections around the globe with detailed visitor information." />
+    
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:title" content="Waktunya Connect - Real-time Global Connections" />
+    <meta property="twitter:description" content="Discover real-time connections around the globe with detailed visitor information." />
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
     <link rel="stylesheet" href="/normalize.css" />
     <link rel="stylesheet" href="/dist/index.css" />
   </head>
   <body>
-    <div id="root">Loading...</div>
+    <div id="root">
+      <div style="
+        display: flex; 
+        flex-direction: column; 
+        align-items: center; 
+        justify-content: center; 
+        min-height: 100vh; 
+        background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+        color: #e5e7eb;
+        font-family: 'Inter', sans-serif;
+      ">
+        <div style="
+          width: 40px; 
+          height: 40px; 
+          border: 3px solid rgba(96, 165, 250, 0.3); 
+          border-top: 3px solid #60a5fa; 
+          border-radius: 50%; 
+          animation: spin 1s linear infinite;
+        "></div>
+        <p style="margin-top: 1rem; font-size: 1.125rem;">Loading Waktunya Connect...</p>
+        <style>
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+        </style>
+      </div>
+    </div>
     <script type="module" src="/dist/index.js"></script>
   </body>
 </html>
